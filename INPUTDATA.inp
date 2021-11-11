@@ -1,0 +1,79 @@
+*HEADING
+**---------------------
+** PIPE DATA
+** ---------------------
+*PARAMETER
+pipe_length =5000	                   # Pipeline length in m
+pipe_OD=0.322	                   # Pipe outer diameter (m)
+wt = 0.022                                       # Pie wall thickness (m)
+pipe_R =pipe_OD/2                     # Pipe radius (m)
+ID=pipe_OD-2*wt                        # Pipe internal diameter (m)
+subweight_E=778	                    # Pipe submerged weight-empty (N/m)
+subweight_F=1400	                    # Pipe submerged weight-flooded (N/m)
+subweight_O=984.3		 # Pipe submerged weight-Operating (N/m)
+steel_E = 2.07E11                           # Young's modulus (N/m2)
+steel_poisson = 0.3                       # Poisson ratio
+steel_dens=7850                            # Density of steel (kg/m3)
+SMYS=448E6		  # Derated SMYS (N/m2)
+alpha_expansion=1.17E-5             # Coefficient of thermal expansion (°C-1)
+**-------------------------
+**ENVIRONMENTAL DATA
+**--------------------------
+WD = 1600                                     # Water depth (m)
+**-------------------------
+** SOIL FRICTION DATA
+**--------------------------
+Ax_E =0.72                                    # Axial friction factor - empty
+Ax_F =0.75                                    # Axial friction factor - flooded
+Ax_O = 0.75                                  # Axial friction factor -operating
+Lat_E =0.81                                   # Lateral  friction factor - empty
+Lat_F =0.86                                   # Lateral friction factor - flooded
+Lat_O =0.84                                 # Lateral friction factor - operating
+**--------------------------
+**PROCESS DATA
+**--------------------------
+initial_Temp =  4		# Ambient Temperature (degC)
+oper_Temp =   85		# Operating Temperature (degC)
+Des_Temp =    92		# Design Temperature (degC)
+Ext_Press =      16.09E6  	# External Pressure (Pa)
+Int_Press_flooded= 16.09E6      #  Internal Pressure - flooded (Pa)
+Int_Press_op = 45E6	                  # Internal Pressure - operating (Pa)
+Int_Press_hydro = 52E6             # Internal Pressure - hydrotest (Pa)
+**--------------------------
+**FLET WEIGHT CALC
+**--------------------------
+Flet_L = 9                                       # Flet length (m)
+FLET_R = 10100                            # Flet axial resistance  (kg)
+
+FLET_W_E = ((FLET_R*9.81)/(Ax_E*Flet_L))	# Flet submerged weight-empty(N/m)
+FLET_W_F = ((FLET_R*9.81)/(Ax_F *Flet_L))	# F let submerged weight-flooded(N/m)
+FLET_W_O = ((FLET_R*9.81)/(Ax_O*Flet_L))	# Flet submerged weight-operating(N/m)
+**-----------------------------------
+**RESIDUAL LAY TENSION
+**-----------------------------------
+RLT_End1= -167100			#Residual lay tension end1
+RLT_End2= 167100			#Residual lay tension end2
+**-------------------------------------------------
+**PRESSURE OVERCLOSURE VALUES
+**-------------------------------------------------
+PRESSURE1=0.0
+PRESSURE2=100
+PRESSURE3=1000
+PRESSURE4=50000
+OVERCLOSURE1=0.0
+OVERCLOSURE2=0.001
+OVERCLOSURE3=0.009
+OVERCLOSURE4=0.03
+**-------------------------------
+**PLASTICITY VALUES
+**-------------------------------
+yield_stress1 = 450E6
+yield_stress2 = 459E6
+yield_stress3 = 583E6
+plastic_strain1 = 0.0
+plastic_strain2 =  0.0176
+plastic_strain3 =  0.0834
+**-------------------------------
+**IMPERFECTION 
+**-------------------------------
+distance =1

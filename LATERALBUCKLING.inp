@@ -1,0 +1,273 @@
+*HEADING
+LATERAL BUCKLING ANALYSIS
+FLAT SEABED
+UNEQUAL MESH SIZE , mesh size at buckle region is refined to 0.8m
+INCLUDE FLET RESISTANCE
+DECOUPLED ANISOTROPIC SOIL FRICTION
+INCLUDE PRESSURE-OVERCLOSURE
+INCLUDE PLASTICITY
+*************************************************************************************
+*INCLUDE,INPUT=INPUTDATA.inp 
+** Nodes and Elements definitions
+*************************************************************************************
+*NODE
+1, 0.0,-<WD>, 0
+*NODE, NSET=N_end_1
+500, 2000, -<WD>, 0
+*NODE, NSET=N_end_2
+1500, 2600, -<WD>,0
+*NODE, NSET=N_end_3
+2500, 3200, -<WD>,0
+*NODE, NSET=N_end_4
+2950, <pipe_length>,-<WD>, 0
+**
+*NGEN, NSET=Section_1
+1,500, 1
+*NGEN, NSET=Section_2
+500, 1500, 1
+*NGEN, NSET=Section_3
+1500, 2500, 1
+*NGEN, NSET=Section_4
+2500,2950, 1
+**
+*NSET, NSET=Nodes
+Section_1, Section_2, Section_3, Section_4
+*NSET, NSET=left_end
+1
+*NSET, NSET=buckle
+1440
+*NSET, NSET=right_end
+2950
+*******************************
+*ELEMENT, TYPE=PIPE31H
+1, 1, 2
+*ELGEN, ELSET=Elem
+1, 2949, 1, 1
+*ELSET, GENERATE, ELSET=Section_1
+1, 499, 1
+*ELSET, GENERATE, ELSET=Section_2
+500, 1499, 1
+*ELSET, GENERATE, ELSET=Section_3
+1500, 2499, 1
+*ELSET, GENERATE, ELSET=Section_4
+2500, 2949, 1
+*ELSET, ELSET=Buckle_set
+Section_2,Section_3
+*ELSET, ELSET=FLET_END1
+1
+*ELSET, ELSET=FLET_END2
+2499
+*ELSET, ELSET=FLETS
+FLET_END1
+FLET_END2
+*******************************
+*BEAM SECTION, ELSET=Elem, SECTION=THICK PIPE, MATERIAL=X65, TEMPERATURE=GRADIENTS
+<pipe_R>, <wt>
+0.0, 0.0, 1.0
+*BEAM SECTION, ELSET=FLETS, SECTION=THICK PIPE, MATERIAL=X65, TEMPERATURE=GRADIENTS
+<pipe_R>, <wt>
+0.0, 0.0, 1.0
+*************************************************************************************
+** Surface to install the pipeline - SURFACE-0
+*************************************************************************************
+*SURFACE, TYPE=CYLINDER, NAME=seabed
+0,0,0,1,0,0
+0,0,-1
+start, -50, -<WD>
+line, 5050, -<WD>
+**
+*NODE, NSET=seabedrefpt
+10000000,0.0,-<WD>,0
+**
+*RIGID BODY, REF NODE=seabedrefpt, ANALYTICAL SURFACE=seabed
+*************************************************************************************
+** Pipe Surface 
+*************************************************************************************
+*SURFACE, TYPE=ELEMENT, NAME=pipe_ax
+elem
+FLETS
+*SURFACE, TYPE=ELEMENT, NAME=pipe_lat
+elem
+FLETS
+*************************************************************************************
+** Pipe contact surface SURFACE
+*************************************************************************************
+*CONTACT PAIR, INTERACTION=pipeseabed_ax
+pipe_ax, seabed
+*SURFACE INTERACTION, NAME=pipeseabed_ax
+1
+*FRICTION, ANISOTROPIC, elastic slip=0.011
+0,0
+*SURFACE BEHAVIOR, PRESSURE-OVERCLOSURE=TABULAR
+<PRESSURE1>,<OVERCLOSURE1>
+<PRESSURE2>,<OVERCLOSURE2>
+<PRESSURE3>,<OVERCLOSURE3>
+<PRESSURE4>,<OVERCLOSURE4>
+*CONTACT PAIR, INTERACTION=pipeseabed_lat
+pipe_lat, seabed
+*SURFACE INTERACTION, NAME=pipeseabed_lat
+1
+*FRICTION, ANISOTROPIC, elastic slip=0.055
+0,0.2
+*SURFACE BEHAVIOR, PRESSURE-OVERCLOSURE=TABULAR
+<PRESSURE1>,<OVERCLOSURE1>
+<PRESSURE2>,<OVERCLOSURE2>
+<PRESSURE3>,<OVERCLOSURE3>
+<PRESSURE4>,<OVERCLOSURE4>
+*************************************************************************************
+** Material Definitions
+*************************************************************************************
+*MATERIAL, NAME=X65
+*ELASTIC, TYPE=Isotropic
+<steel_E>,<steel_poisson>
+*PLASTIC, HARDENING=ISOTROPIC
+<yield_stress1>,<plastic_strain1>
+<yield_stress2>,<plastic_strain2>
+<yield_stress3>,<plastic_strain3>
+*EXPANSION
+<alpha_expansion>
+*DENSITY
+<steel_dens>
+*************************************************************************************
+** Initial Conditions
+*************************************************************************************
+*INITIAL CONDITIONS, TYPE=TEMPERATURE
+Nodes, <initial_Temp>,<initial_Temp>,<initial_Temp>,<initial_Temp>
+*Boundary
+left_end,1,6
+Nodes, 4, 4
+seabedrefpt, ENCASTRE
+** ----------------------------------------------------------------
+** ANALYSIS STEPS
+** ----------------------------------------------------------------
+**
+** -------------------------------------------
+** STEP1: External Pressure ,emptyweight, RLT
+** -------------------------------------------
+*STEP, name=PE, nlgeom=YES,inc=500
+*Static
+0.1, 1., 1e-10, 1.0
+*DLOAD, OP=NEW
+Elem,PE,<Ext_Press>,<pipe_OD>,close
+FLETS,PE,<Ext_Press>,<pipe_OD>,close
+Elem, PY,-<subweight_E>
+FLETS, PY,-<FLET_W_E>
+*cload
+left_end,1,<RLT_End1>
+right_end,1,<RLT_End2>
+*output, field
+*node output
+U,CF, Coord, NT
+*element output,directions=YES
+ESF1,S,SF,E,SE,PE,THE,EE,temp
+*contact output
+CDISP, CSTRESS
+*End step
+** -------------------------------------------
+** STEP2: introduce buckle
+** -------------------------------------------
+*STEP, name=imperfection, nlgeom=YES,inc=500
+*Static
+0.01, 1.0, 1E-10, 1.0
+*boundary
+left_end,encastre
+buckle,3,3, <distance>
+seabedrefpt, ENCASTRE
+Nodes, 4, 4
+*End step
+** ----------------------------------------------------------------
+** STEP3: release buckle
+** -------------------------------------------
+*STEP, name=release_buck, nlgeom=YES,inc=500
+*Static
+0.01, 1.0, 1E-10, 1.0
+*boundary, op=new
+left_end,1,6
+Nodes,4,4
+seabedrefpt,encastre
+*End step
+** ----------------------------------------------------------------
+**STEP4: remove RLT and apply empty friction 
+** -------------------------------------------
+*step, name=remove_RLT, nlgeom=yes,inc=500
+*static
+0.01, 1.0, 1E-10, 1.0
+*boundary,OP=NEW
+Nodes,4,4
+seabedrefpt, ENCASTRE
+*cload
+left_end,1,0
+right_end,1,0
+*Change friction, interaction=pipeseabed_ax
+*friction, elastic slip=0.011, anisotropic
+<Ax_E>,0
+*Change friction, interaction=pipeseabed_lat
+*friction, elastic slip=0.055, anisotropic
+0,<Lat_E>
+*end step
+** -------------------------------------------
+**STEP5: Flooded condition
+** -------------------------------------------
+*STEP, name=FloodedWeight, nlgeom=YES,inc=500
+*Static
+0.1, 1.0, 1E-10, 1.0
+*DLOAD, OP=mod
+Elem, PY, -<subweight_F>
+FLETS, PY, -<FLET_W_F>
+Elem,PI,<Int_Press_flooded>,<ID>,close
+FLETS,PI,<Int_Press_flooded>,<ID>,close
+*Change friction, interaction=pipeseabed_ax 
+*friction, elastic slip=0.011, anisotropic
+<Ax_F>,0
+*Change friction, interaction=pipeseabed_lat 
+*friction, elastic slip=0.055, anisotropic
+0,<Lat_F>
+*End step
+** -------------------------------------------
+**STEP6:  Hydrotest condition
+** -------------------------------------------
+*STEP, name=Hydrotest, nlgeom=YES,inc=500
+*Static
+0.1, 1.0, 1E-10, 1.0
+*DLOAD, OP=mod
+Elem,PI,<Int_Press_hydro>,0.2795,close
+FLETS,PI,<Int_Press_hydro>,0.2795,close
+*End step
+** -------------------------------------------
+**STEP7: Remove water
+** -------------------------------------------
+*STEP, name=Dewater, nlgeom=yes,inc=500
+*static
+0.1, 1.0, 1E-10, 1.0
+*Dload, op=mod
+Elem,PI,15.67e6,0.2795,close
+FLETS,PI,15.67e6,0.2795,close
+Elem, PY, -<subweight_E>
+FLETS, PY, -<FLET_W_E>
+*Change friction, interaction=pipeseabed_ax
+*friction, elastic slip=0.011, anisotropic
+<Ax_E>,0
+*Change friction, interaction=pipeseabed_lat
+*friction, elastic slip=0.055, anisotropic
+0,<Lat_E>
+*end step
+** -------------------------------------------
+**STEP8: Apply Operating condition
+** -------------------------------------------
+*STEP, name=Operating, nlgeom=yes,inc=500
+*static, STABILIZE
+0.1, 1.0, 1E-10, 1.0
+*DLOAD, OP=mod
+Elem, PY, -<subweight_O>
+FLETS, PY, -<FLET_W_O>
+Elem,PI,<Int_Press_op>,0.2795,close
+FLETS,PI,<Int_Press_op>,0.2795,close
+*Change friction, interaction=pipeseabed_ax
+*friction, elastic slip=0.011, anisotropic
+<Ax_O>,0
+*Change friction, interaction=pipeseabed_lat
+*friction, elastic slip=0.055, anisotropic
+0,<Lat_O>
+*temperature
+Nodes,<Des_Temp>,<Des_Temp>,<Des_Temp>,<Des_Temp>
+*end step
